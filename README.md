@@ -10,6 +10,7 @@ An async FastAPI service that summarises text and PDF documents using Claude, wi
 - Input validation at every entry boundary (file size, content type, text length)
 
 ## Architecture
+```
 Request (JSON text or file upload)
 │
 ▼
@@ -32,6 +33,7 @@ one coherent result
 ▼
 SummaryResponse (JSON)
 For long documents, chunk summarisation happens **concurrently** rather than sequentially — each chunk is an independent Claude API call, so there's no reason to wait for one to finish before starting the next.
+```
 
 ## Tech stack
 
