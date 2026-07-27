@@ -14,7 +14,9 @@ MIN_BYTES = 100
 MIN_TEXT_CHARS = 100
 MAX_TEXT_CHARS = 100_000  # ~100 pages
 
-DEF_CHUNK_TEXT_SIZE = 8_000  # ~4-5 pages per chunk
+# The size we deliberately keep each chunk under for SUMMARY QUALITY,
+# not because the model can't handle more — well below model context char limit
+QUALITY_CHUNK_CHAR_LIMIT = 8_000 
 
 SUMMARY_SYSTEM_PROMPT = (
     "Summarize the following text. Use a brief intro paragraph, then organize "
@@ -50,7 +52,7 @@ def validate_content_text_size(size: int):
         raise HTTPException(400, "Content too small")
 
 
-def chunk_text(text: str, chunk_size: int = DEF_CHUNK_TEXT_SIZE) -> list[str]:
+def chunk_text(text: str, chunk_size: int = QUALITY_CHUNK_CHAR_LIMIT) -> list[str]:
     paragraphs = re.split(r"\n\s*\n", text)
     chunks: list[str] = []
     current = ""

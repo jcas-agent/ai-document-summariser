@@ -74,12 +74,20 @@ curl -X POST http://localhost:8000/uploadfile/ \
   -F "file=@document.pdf;type=application/pdf"
 ```
 
-## Design decisions
+## Design decisions and cost trade-offs
 
-See [`adr/`](./adr) for detailed architecture decision records, including the chunking strategy and validation approach.
+Documents are chunked and summarised concurrently, then combined in a final synthesis pass (see [ADR-001](./adr/001-chunking-strategy.md) for the full reasoning).
+
+This costs roughly 25-30% more in API usage than a single-shot summary, since it generates multiple partial summaries plus one combining pass. The trade-off is deliberate: chunking preserves per-section detail that a single very long summarisation call tends to lose. Output tokens cost significantly more than input tokens on Claude's pricing, which is the main driver of the cost difference — chunking is a quality trade-off paid for in cost, not a cost optimisation.
+
+**Known limitations:**
+- Chunking is currently applied more aggressively than the model's actual context window requires — Claude Haiku 4.5 supports far larger single-request inputs than this project's per-chunk size. A future improvement would only chunk documents that approach the model's real context limit, reducing cost for small-to-medium documents while keeping the quality benefit for genuinely long ones.
+- Size constants (`QUALITY_CHUNK_CHAR_LIMIT`, `MAX_TEXT_CHARS`, `MAX_BYTES`) are current development/testing values, not yet tuned against real quality or cost benchmarks.
 
 ## Possible future improvements
 
-- Streaming responses for real-time progress on long documents
+- Only chunk documents that approach the model's real context limit, rather than a low fixed threshold
+- Prompt caching for the shared system prompt across chunk calls, to reduce repeated input cost
+- Streaming progress updates for long-running requests (Server-Sent Events, paired with `asyncio.as_completed()` to preserve concurrency)
 - Support for additional file types (`.docx`, `.md`)
 - Configurable summary style (bullet points vs. prose, length)
